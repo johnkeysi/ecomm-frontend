@@ -1,356 +1,375 @@
-<!-- app/pages/products.vue -->
+<!-- app/pages/products.vue — Product Management (Dark & Modern design, matches the Homepage) -->
 <template>
-  <v-layout class="product-layout">
-    <!-- ========================================
-         APP BAR (Step 7)
-    ========================================= -->
-    <v-app-bar flat height="76" class="shop-header">
-      <v-container class="d-flex align-center">
-        <NuxtLink to="/" class="logo-link d-flex align-center ga-2">
-          <v-icon icon="mdi-cart" color="primary" size="38" />
-          <span class="text-h5 font-weight-bold text-black">
-            Shop<span class="text-primary">Kart</span>
-          </span>
-        </NuxtLink>
+  <!-- Same custom dark theme as the Homepage (defined in nuxt.config.ts) -->
+  <v-theme-provider theme="shopkartDark" with-background>
+    <v-layout class="product-layout">
+      <!-- ========================================
+           APP BAR (glass effect, same as Homepage)
+      ========================================= -->
+      <v-app-bar flat height="72" class="glass-bar">
+        <v-container class="d-flex align-center">
+          <NuxtLink to="/" class="logo-link d-flex align-center ga-2">
+            <div class="logo-mark">
+              <v-icon icon="mdi-cart" size="22" color="black" />
+            </div>
+            <span class="text-h6 font-weight-black text-white logo-text">
+              SHOP<span class="text-gradient">KART</span>
+            </span>
+          </NuxtLink>
 
-        <v-spacer />
+          <v-spacer />
 
-        <v-btn to="/" variant="text" prepend-icon="mdi-home-outline">
-          Home
-        </v-btn>
-
-        <v-btn color="primary" variant="tonal" prepend-icon="mdi-package-variant">
-          Manage Products
-        </v-btn>
-      </v-container>
-    </v-app-bar>
-
-    <v-main class="product-page">
-      <v-container class="py-8">
-        <!-- ========================================
-             PAGE HEADER + ADD BUTTON (Step 8)
-        ========================================= -->
-        <div class="d-flex flex-wrap align-center justify-space-between ga-4 mb-6">
-          <div>
-            <h1 class="text-h4 font-weight-bold">Product Management</h1>
-            <p class="text-medium-emphasis mt-1 mb-0">
-              Manage your e-commerce products
-            </p>
-          </div>
+          <v-btn to="/" variant="text" class="nav-btn" prepend-icon="mdi-home-outline">
+            <span class="d-none d-sm-inline">Home</span>
+          </v-btn>
 
           <v-btn
             color="primary"
-            prepend-icon="mdi-plus"
-            size="large"
-            @click="openCreateDialog"
+            variant="tonal"
+            rounded="pill"
+            class="ml-2 nav-active"
+            prepend-icon="mdi-view-dashboard-outline"
           >
-            Add Product
+            <span class="d-none d-sm-inline">Manage Products</span>
           </v-btn>
-        </div>
+        </v-container>
+      </v-app-bar>
 
-        <!-- ========================================
-             SEARCH (Step 11)
-        ========================================= -->
-        <v-card class="mb-6" rounded="lg" elevation="1">
-          <v-card-text>
+      <v-main class="product-page">
+        <div class="page-glow" />
+
+        <v-container class="py-10 position-relative">
+          <!-- ========================================
+               PAGE HEADER + ADD BUTTON
+          ========================================= -->
+          <div class="d-flex flex-wrap align-end justify-space-between ga-4 mb-8">
+            <div>
+              <div class="section-label">Admin</div>
+              <h1 class="page-title">Product Management</h1>
+              <p class="text-medium-emphasis mt-1 mb-0">
+                Manage your e-commerce products
+              </p>
+            </div>
+
+            <v-btn
+              color="primary"
+              prepend-icon="mdi-plus"
+              size="large"
+              rounded="pill"
+              class="glow-btn px-6"
+              @click="openCreateDialog"
+            >
+              Add Product
+            </v-btn>
+          </div>
+
+          <!-- ========================================
+               SEARCH
+          ========================================= -->
+          <div class="panel pa-4 mb-6">
             <v-text-field
               v-model="search"
-              label="Search product"
+              placeholder="Search product"
               prepend-inner-icon="mdi-magnify"
-              variant="outlined"
+              variant="solo-filled"
+              flat
+              rounded="pill"
               density="comfortable"
               clearable
               hide-details
+              class="search-field"
             />
-          </v-card-text>
-        </v-card>
+          </div>
 
-        <!-- ========================================
-             LOADING + EMPTY STATES (Step 14)
-        ========================================= -->
-        <div v-if="loading" class="text-center py-16">
-          <v-progress-circular indeterminate color="primary" size="50" />
-          <div class="mt-4 text-medium-emphasis">Loading products...</div>
-        </div>
+          <!-- ========================================
+               LOADING + EMPTY STATES
+          ========================================= -->
+          <div v-if="loading" class="text-center py-16">
+            <v-progress-circular indeterminate color="primary" size="50" width="3" />
+            <div class="mt-4 text-medium-emphasis">Loading products...</div>
+          </div>
 
-        <v-card
-          v-else-if="filteredProducts.length === 0"
-          rounded="lg"
-          elevation="1"
-        >
-          <v-card-text class="text-center py-16">
-            <v-icon icon="mdi-package-variant" size="64" color="grey" />
-            <h3 class="mt-4">No Products Found</h3>
+          <div
+            v-else-if="filteredProducts.length === 0"
+            class="panel text-center py-16"
+          >
+            <div class="empty-icon mx-auto">
+              <v-icon icon="mdi-package-variant" size="48" color="primary" />
+            </div>
+            <h3 class="mt-5">No Products Found</h3>
             <p class="text-medium-emphasis mt-2">
               Add your first product or try another search.
             </p>
-          </v-card-text>
-        </v-card>
+          </div>
 
-        <!-- ========================================
-             PRODUCT TABLE (Step 15)
-        ========================================= -->
-        <v-card v-else rounded="lg" elevation="1" class="product-table-card">
-          <v-table>
-            <thead>
-              <tr>
-                <th>Image</th>
-                <th>Name</th>
-                <th>Category</th>
-                <th>Price</th>
-                <th>Stock</th>
-                <th>Status</th>
-                <th class="text-center">Actions</th>
-              </tr>
-            </thead>
+          <!-- ========================================
+               PRODUCT TABLE
+          ========================================= -->
+          <div v-else class="panel product-table-card">
+            <v-table class="dark-table">
+              <thead>
+                <tr>
+                  <th>Image</th>
+                  <th>Name</th>
+                  <th>Category</th>
+                  <th>Price</th>
+                  <th>Stock</th>
+                  <th>Status</th>
+                  <th class="text-center">Actions</th>
+                </tr>
+              </thead>
 
-            <tbody>
-              <tr v-for="product in filteredProducts" :key="product.documentId">
-                <td>
-                  <v-avatar rounded="lg" size="70" class="my-2">
-                    <v-img
-                      v-if="product.image"
-                      :src="getImageUrl(product.image)"
-                      :alt="product.name"
-                      cover
-                    />
-                    <v-icon v-else icon="mdi-image-off" color="grey" />
-                  </v-avatar>
-                </td>
+              <tbody>
+                <tr v-for="product in filteredProducts" :key="product.documentId">
+                  <td>
+                    <v-avatar rounded="lg" size="64" class="my-2 img-frame">
+                      <v-img
+                        v-if="product.image"
+                        :src="getImageUrl(product.image)"
+                        :alt="product.name"
+                        cover
+                      />
+                      <v-icon v-else icon="mdi-image-off" color="grey" />
+                    </v-avatar>
+                  </td>
 
-                <td>
-                  <div class="font-weight-bold">{{ product.name }}</div>
-                  <div class="description-text text-medium-emphasis">
-                    {{ product.description || 'No description' }}
+                  <td>
+                    <div class="font-weight-bold text-white">{{ product.name }}</div>
+                    <div class="description-text text-medium-emphasis">
+                      {{ product.description || 'No description' }}
+                    </div>
+                  </td>
+
+                  <td>
+                    <span class="category-tag">{{ product.category || 'Uncategorized' }}</span>
+                  </td>
+
+                  <td class="price">{{ formatPrice(product.price) }}</td>
+
+                  <td>
+                    <v-chip :color="getStockColor(product.stock)" variant="tonal" size="small">
+                      <v-icon icon="mdi-circle" size="8" start />
+                      {{ product.stock }}
+                    </v-chip>
+                  </td>
+
+                  <td>
+                    <v-chip :color="product.is_active ? 'success' : 'error'" variant="tonal" size="small">
+                      {{ product.is_active ? 'Active' : 'Inactive' }}
+                    </v-chip>
+                  </td>
+
+                  <td>
+                    <div class="d-flex justify-center ga-1">
+                      <v-btn icon="mdi-eye-outline" variant="text" color="info" size="small" @click="viewProduct(product)" />
+                      <v-btn icon="mdi-pencil-outline" variant="text" color="primary" size="small" @click="openEditDialog(product)" />
+                      <v-btn icon="mdi-trash-can-outline" variant="text" color="error" size="small" @click="openDeleteDialog(product)" />
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </v-table>
+          </div>
+
+          <!-- ========================================
+               CREATE / EDIT DIALOG
+          ========================================= -->
+          <v-dialog v-model="productDialog" max-width="700" persistent scrollable>
+            <v-card rounded="xl" class="dialog-card">
+              <v-card-title class="d-flex align-center justify-space-between pa-6">
+                <span class="text-h5 font-weight-black">
+                  <v-icon :icon="isEditing ? 'mdi-pencil-outline' : 'mdi-plus-circle-outline'" color="primary" class="mr-1" />
+                  {{ isEditing ? 'Edit Product' : 'Add Product' }}
+                </span>
+                <v-btn icon="mdi-close" variant="text" @click="closeProductDialog" />
+              </v-card-title>
+
+              <v-divider />
+
+              <v-card-text class="pa-6">
+                <v-form ref="productForm" @submit.prevent="saveProduct">
+                  <div v-if="imagePreview || currentImage" class="image-preview mb-4">
+                    <v-img :src="imagePreview || getImageUrl(currentImage)" height="220" contain />
                   </div>
-                </td>
 
-                <td>
-                  <v-chip color="primary" variant="tonal" size="small">
-                    {{ product.category || 'Uncategorized' }}
-                  </v-chip>
-                </td>
+                  <v-file-input
+                    v-model="selectedFile"
+                    label="Select Product Image"
+                    variant="outlined"
+                    accept="image/*"
+                    prepend-icon=""
+                    prepend-inner-icon="mdi-image-outline"
+                    @update:model-value="handleImageChange"
+                  />
 
-                <td class="font-weight-bold">{{ formatPrice(product.price) }}</td>
+                  <v-text-field
+                    v-model="form.name"
+                    label="Product Name"
+                    variant="outlined"
+                    :rules="[(value) => !!value || 'Product name is required']"
+                  />
 
-                <td>
-                  <v-chip :color="getStockColor(product.stock)" variant="tonal" size="small">
-                    {{ product.stock }}
-                  </v-chip>
-                </td>
+                  <v-textarea v-model="form.description" label="Description" variant="outlined" rows="3" />
 
-                <td>
-                  <v-chip :color="product.is_active ? 'success' : 'error'" variant="tonal" size="small">
-                    {{ product.is_active ? 'Active' : 'Inactive' }}
-                  </v-chip>
-                </td>
+                  <v-row>
+                    <v-col cols="12" md="6">
+                      <v-text-field
+                        v-model.number="form.price"
+                        label="Price"
+                        type="number"
+                        variant="outlined"
+                        prefix="₱"
+                        :rules="priceRules"
+                      />
+                    </v-col>
+                    <v-col cols="12" md="6">
+                      <v-text-field
+                        v-model.number="form.stock"
+                        label="Stock"
+                        type="number"
+                        variant="outlined"
+                        :rules="stockRules"
+                      />
+                    </v-col>
+                  </v-row>
 
-                <td>
-                  <div class="d-flex justify-center ga-1">
-                    <v-btn icon="mdi-eye" variant="text" color="info" size="small" @click="viewProduct(product)" />
-                    <v-btn icon="mdi-pencil" variant="text" color="primary" size="small" @click="openEditDialog(product)" />
-                    <v-btn icon="mdi-delete" variant="text" color="error" size="small" @click="openDeleteDialog(product)" />
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </v-table>
-        </v-card>
+                  <v-select v-model="form.category" :items="categories" label="Category" variant="outlined" />
+                  <v-switch v-model="form.is_active" label="Active Product" color="primary" inset />
+                </v-form>
+              </v-card-text>
 
-        <!-- ========================================
-             CREATE / EDIT DIALOG (Step 17)
-        ========================================= -->
-        <v-dialog v-model="productDialog" max-width="700" persistent>
-          <v-card rounded="xl">
-            <v-card-title class="d-flex align-center justify-space-between pa-5">
-              <span class="text-h5 font-weight-bold">
-                {{ isEditing ? 'Edit Product' : 'Add Product' }}
-              </span>
-              <v-btn icon="mdi-close" variant="text" @click="closeProductDialog" />
-            </v-card-title>
+              <v-divider />
 
-            <v-divider />
+              <v-card-actions class="pa-6">
+                <v-spacer />
+                <v-btn variant="text" rounded="pill" @click="closeProductDialog">Cancel</v-btn>
+                <v-btn color="primary" variant="flat" rounded="pill" class="glow-btn px-6" :loading="saving" @click="saveProduct">
+                  {{ isEditing ? 'Update Product' : 'Save Product' }}
+                </v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
 
-            <v-card-text class="pa-6">
-              <v-form ref="productForm" @submit.prevent="saveProduct">
-                <div v-if="imagePreview || currentImage" class="image-preview mb-4">
-                  <v-img :src="imagePreview || getImageUrl(currentImage)" height="220" contain />
-                </div>
+          <!-- ========================================
+               VIEW PRODUCT DIALOG
+          ========================================= -->
+          <v-dialog v-model="viewDialog" max-width="600">
+            <v-card v-if="selectedProduct" rounded="xl" class="dialog-card">
+              <!-- PRODUCT IMAGE -->
+              <v-img
+                v-if="selectedProduct.image"
+                :src="getImageUrl(selectedProduct.image)"
+                height="320"
+                contain
+                class="product-view-image"
+              />
 
-                <v-file-input
-                  v-model="selectedFile"
-                  label="Select Product Image"
-                  variant="outlined"
-                  accept="image/*"
-                  @update:model-value="handleImageChange"
-                />
-
-                <v-text-field
-                  v-model="form.name"
-                  label="Product Name"
-                  variant="outlined"
-                  :rules="[(value) => !!value || 'Product name is required']"
-                />
-
-                <v-textarea v-model="form.description" label="Description" variant="outlined" rows="3" />
-
-                <v-row>
-                  <v-col cols="12" md="6">
-                    <v-text-field
-                      v-model.number="form.price"
-                      label="Price"
-                      type="number"
-                      variant="outlined"
-                      :rules="priceRules"
-                    />
-                  </v-col>
-                  <v-col cols="12" md="6">
-                    <v-text-field
-                      v-model.number="form.stock"
-                      label="Stock"
-                      type="number"
-                      variant="outlined"
-                      :rules="stockRules"
-                    />
-                  </v-col>
-                </v-row>
-
-                <v-select v-model="form.category" :items="categories" label="Category" variant="outlined" />
-                <v-switch v-model="form.is_active" label="Active Product" color="success" inset />
-              </v-form>
-            </v-card-text>
-
-            <v-divider />
-
-            <v-card-actions class="pa-5">
-              <v-spacer />
-              <v-btn variant="text" @click="closeProductDialog">Cancel</v-btn>
-              <v-btn color="primary" :loading="saving" @click="saveProduct">
-                {{ isEditing ? 'Update Product' : 'Save Product' }}
-              </v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
-
-        <!-- ========================================
-             VIEW PRODUCT DIALOG (Step 27.1)
-        ========================================= -->
-        <v-dialog v-model="viewDialog" max-width="600">
-          <v-card v-if="selectedProduct" rounded="xl">
-            <!-- PRODUCT IMAGE -->
-            <v-img
-              v-if="selectedProduct.image"
-              :src="getImageUrl(selectedProduct.image)"
-              height="320"
-              contain
-              class="product-view-image"
-            />
-
-            <!-- NO IMAGE PLACEHOLDER -->
-            <div
-              v-else
-              class="d-flex align-center justify-center bg-grey-lighten-3"
-              style="height: 250px"
-            >
-              <v-icon icon="mdi-image-off" size="80" color="grey" />
-            </div>
-
-            <!-- PRODUCT INFORMATION -->
-            <v-card-text class="pa-6">
-              <div class="d-flex align-start justify-space-between ga-4">
-                <div>
-                  <h2 class="text-h5 font-weight-bold">
-                    {{ selectedProduct.name }}
-                  </h2>
-
-                  <v-chip class="mt-2" color="primary" variant="tonal" size="small">
-                    {{ selectedProduct.category || 'Uncategorized' }}
-                  </v-chip>
-                </div>
-
-                <v-chip
-                  :color="selectedProduct.is_active ? 'success' : 'error'"
-                  variant="tonal"
-                >
-                  {{ selectedProduct.is_active ? 'Active' : 'Inactive' }}
-                </v-chip>
+              <!-- NO IMAGE PLACEHOLDER -->
+              <div
+                v-else
+                class="d-flex align-center justify-center product-view-image"
+                style="height: 250px"
+              >
+                <v-icon icon="mdi-image-off" size="80" color="grey-darken-1" />
               </div>
 
-              <p class="mt-5 text-medium-emphasis">
-                {{ selectedProduct.description || 'No product description.' }}
-              </p>
+              <!-- PRODUCT INFORMATION -->
+              <v-card-text class="pa-6">
+                <div class="d-flex align-start justify-space-between ga-4">
+                  <div>
+                    <h2 class="text-h5 font-weight-black text-white">
+                      {{ selectedProduct.name }}
+                    </h2>
 
-              <v-divider class="my-5" />
-
-              <v-row>
-                <v-col cols="6">
-                  <div class="text-caption text-medium-emphasis">Price</div>
-                  <div class="text-h5 font-weight-bold text-primary">
-                    {{ formatPrice(selectedProduct.price) }}
+                    <span class="category-tag d-inline-block mt-2">
+                      {{ selectedProduct.category || 'Uncategorized' }}
+                    </span>
                   </div>
-                </v-col>
 
-                <v-col cols="6">
-                  <div class="text-caption text-medium-emphasis">Stock</div>
-                  <div class="text-h6 font-weight-bold">
-                    {{ selectedProduct.stock }} units
-                  </div>
-                </v-col>
-              </v-row>
-            </v-card-text>
+                  <v-chip
+                    :color="selectedProduct.is_active ? 'success' : 'error'"
+                    variant="tonal"
+                  >
+                    {{ selectedProduct.is_active ? 'Active' : 'Inactive' }}
+                  </v-chip>
+                </div>
 
-            <v-card-actions class="pa-5 pt-0">
-              <v-spacer />
-              <v-btn color="primary" variant="tonal" @click="viewDialog = false">
-                Close
-              </v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
+                <p class="mt-5 text-medium-emphasis">
+                  {{ selectedProduct.description || 'No product description.' }}
+                </p>
 
-        <!-- ========================================
-             DELETE CONFIRMATION DIALOG (Step 26)
-        ========================================= -->
-        <v-dialog v-model="deleteDialog" max-width="450">
-          <v-card rounded="xl">
-            <v-card-text class="text-center pa-8">
-              <v-icon icon="mdi-delete-alert" size="60" color="error" />
-              <h2 class="text-h5 font-weight-bold mt-3">Delete Product?</h2>
-              <p class="text-medium-emphasis mt-3">
-                Are you sure you want to delete
-                <strong>{{ selectedProduct?.name }}</strong>?
-              </p>
-            </v-card-text>
+                <v-divider class="my-5" />
 
-            <v-card-actions class="pa-5 pt-0">
-              <v-btn variant="text" block @click="deleteDialog = false">Cancel</v-btn>
-              <v-btn color="error" block :loading="deleting" @click="deleteProduct">
-                Delete
-              </v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
+                <v-row>
+                  <v-col cols="6">
+                    <div class="text-caption text-medium-emphasis">Price</div>
+                    <div class="text-h5 font-weight-black text-gradient">
+                      {{ formatPrice(selectedProduct.price) }}
+                    </div>
+                  </v-col>
 
-        <!-- ========================================
-             SNACKBAR
-             (Not shown in the guide's template, but required:
-              without it, showSnackbar() changes the state and
-              nothing appears on screen.)
-        ========================================= -->
-        <v-snackbar
-          v-model="snackbar.show"
-          :color="snackbar.color"
-          timeout="3000"
-          location="top right"
-        >
-          {{ snackbar.message }}
-          <template #actions>
-            <v-btn variant="text" icon="mdi-close" @click="snackbar.show = false" />
-          </template>
-        </v-snackbar>
-      </v-container>
-    </v-main>
-  </v-layout>
+                  <v-col cols="6">
+                    <div class="text-caption text-medium-emphasis">Stock</div>
+                    <div class="text-h6 font-weight-bold text-white">
+                      {{ selectedProduct.stock }} units
+                    </div>
+                  </v-col>
+                </v-row>
+              </v-card-text>
+
+              <v-card-actions class="pa-6 pt-0">
+                <v-spacer />
+                <v-btn color="primary" variant="tonal" rounded="pill" @click="viewDialog = false">
+                  Close
+                </v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
+
+          <!-- ========================================
+               DELETE CONFIRMATION DIALOG
+          ========================================= -->
+          <v-dialog v-model="deleteDialog" max-width="450">
+            <v-card rounded="xl" class="dialog-card dialog-danger">
+              <v-card-text class="text-center pa-8">
+                <div class="delete-icon mx-auto">
+                  <v-icon icon="mdi-delete-alert-outline" size="44" color="error" />
+                </div>
+                <h2 class="text-h5 font-weight-black mt-4 text-white">Delete Product?</h2>
+                <p class="text-medium-emphasis mt-3">
+                  Are you sure you want to delete
+                  <strong class="text-white">{{ selectedProduct?.name }}</strong>?
+                </p>
+              </v-card-text>
+
+              <v-card-actions class="pa-6 pt-0 ga-2">
+                <v-btn variant="tonal" rounded="pill" class="flex-grow-1" @click="deleteDialog = false">Cancel</v-btn>
+                <v-btn color="error" variant="flat" rounded="pill" class="flex-grow-1" :loading="deleting" @click="deleteProduct">
+                  Delete
+                </v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
+
+          <!-- ========================================
+               SNACKBAR
+          ========================================= -->
+          <v-snackbar
+            v-model="snackbar.show"
+            :color="snackbar.color"
+            timeout="3000"
+            location="top right"
+            rounded="pill"
+          >
+            {{ snackbar.message }}
+            <template #actions>
+              <v-btn variant="text" icon="mdi-close" @click="snackbar.show = false" />
+            </template>
+          </v-snackbar>
+        </v-container>
+      </v-main>
+    </v-layout>
+  </v-theme-provider>
 </template>
 
 <script setup lang="ts">
@@ -747,19 +766,56 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Step 29 */
+/* ========================================
+   DARK & MODERN THEME — same tokens as the Homepage
+========================================= */
 .product-layout {
+  --sk-bg: #07090d;
+  --sk-surface: #0f141b;
+  --sk-surface-2: #151c25;
+  --sk-border: rgba(255, 255, 255, 0.08);
+  --sk-teal: #14e0b4;
+  --sk-cyan: #22d3ee;
+  --sk-glow: rgba(20, 224, 180, 0.35);
   min-height: 100vh;
+  font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
 }
 
 .product-page {
+  position: relative;
   min-height: 100vh;
-  background: #f5f7fb;
+  background: var(--sk-bg);
+  color: #e8edf2;
+  overflow: hidden;
 }
 
-.shop-header {
-  background: #ffffff !important;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+.page-glow {
+  position: absolute;
+  width: 520px;
+  height: 520px;
+  top: -220px;
+  right: -160px;
+  border-radius: 50%;
+  background: rgba(20, 224, 180, 0.18);
+  filter: blur(110px);
+  pointer-events: none;
+}
+
+.text-gradient {
+  background: linear-gradient(90deg, var(--sk-teal), var(--sk-cyan));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ========================================
+   APP BAR + LOGO
+========================================= */
+.glass-bar {
+  background: rgba(7, 9, 13, 0.72) !important;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--sk-border);
 }
 
 .logo-link {
@@ -767,8 +823,130 @@ onMounted(() => {
   white-space: nowrap;
 }
 
+.logo-mark {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--sk-teal), var(--sk-cyan));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 18px var(--sk-glow);
+}
+
+.logo-text {
+  letter-spacing: 2px;
+}
+
+.nav-btn {
+  text-transform: none;
+  letter-spacing: 0;
+  color: #aab4bf;
+}
+
+.nav-btn:hover {
+  color: #ffffff;
+}
+
+.nav-active {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 700;
+}
+
+/* ========================================
+   HEADINGS + BUTTONS
+========================================= */
+.section-label {
+  color: var(--sk-teal);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.page-title {
+  font-size: clamp(1.8rem, 3.5vw, 2.5rem);
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: #ffffff;
+}
+
+.glow-btn {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 700;
+  box-shadow: 0 6px 24px var(--sk-glow);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.glow-btn:hover {
+  box-shadow: 0 8px 34px rgba(20, 224, 180, 0.55);
+  transform: translateY(-1px);
+}
+
+/* ========================================
+   PANELS, SEARCH, EMPTY STATE
+========================================= */
+.panel {
+  border-radius: 20px;
+  background: var(--sk-surface);
+  border: 1px solid var(--sk-border);
+}
+
+.search-field :deep(.v-field) {
+  background: var(--sk-surface-2) !important;
+  border: 1px solid var(--sk-border);
+}
+
+.empty-icon {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: rgba(20, 224, 180, 0.08);
+  border: 1px solid rgba(20, 224, 180, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ========================================
+   PRODUCT TABLE
+========================================= */
 .product-table-card {
   overflow-x: auto;
+}
+
+.dark-table {
+  background: transparent !important;
+}
+
+.dark-table :deep(thead th) {
+  background: var(--sk-surface-2) !important;
+  color: #7d8894 !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--sk-border) !important;
+}
+
+.dark-table :deep(tbody td) {
+  border-bottom: 1px solid var(--sk-border) !important;
+}
+
+.dark-table :deep(tbody tr) {
+  transition: background 0.15s ease;
+}
+
+.dark-table :deep(tbody tr:hover) {
+  background: rgba(20, 224, 180, 0.04) !important;
+}
+
+.img-frame {
+  background: #1a222d;
+  border: 1px solid var(--sk-border);
 }
 
 .description-text {
@@ -779,14 +957,68 @@ onMounted(() => {
   font-size: 13px;
 }
 
+.category-tag {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--sk-teal);
+  background: rgba(20, 224, 180, 0.08);
+  border: 1px solid rgba(20, 224, 180, 0.35);
+}
+
+.price {
+  font-weight: 800;
+  color: var(--sk-teal);
+  white-space: nowrap;
+}
+
+/* ========================================
+   DIALOGS (teleported, so plain colors are used here)
+========================================= */
+.dialog-card {
+  background: #0f141b !important;
+  border: 1px solid rgba(20, 224, 180, 0.2);
+}
+
+.dialog-danger {
+  border-color: rgba(244, 63, 94, 0.35);
+}
+
 .image-preview {
   overflow: hidden;
-  border: 1px solid rgba(0, 0, 0, 0.12);
-  border-radius: 12px;
-  background: #f5f5f5;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  background: #0b0f14;
 }
 
 .product-view-image {
-  background: #f8f9fa;
+  background: #0b0f14;
+}
+
+.category-tag.d-inline-block {
+  color: #14e0b4;
+  background: rgba(20, 224, 180, 0.08);
+  border-color: rgba(20, 224, 180, 0.35);
+}
+
+.text-gradient.text-h5 {
+  background: linear-gradient(90deg, #14e0b4, #22d3ee);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.delete-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: rgba(244, 63, 94, 0.1);
+  border: 1px solid rgba(244, 63, 94, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 </style>
